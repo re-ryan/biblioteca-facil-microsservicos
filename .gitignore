@@ -1,0 +1,42 @@
+# Java e ferramentas de build
+target/
+build/
+output/
+.gradle/
+*.class
+*.jar
+*.war
+
+# IDEs e sistema operacional
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+.DS_Store
+Thumbs.db
+
+# Logs, cobertura e temporarios
+*.log
+coverage/
+.cache/
+tmp/
+*.tmp
+
+# Configuracao local e segredos
+.env
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+application-local.yaml
+*.jks
+*.p12
+*.pem
+*.key
+
+# Ferramentas de IA: preservar apenas artefatos deliberadamente versionados
+.ai/
+.claude/settings.local.json
+.cursor/rules.local/

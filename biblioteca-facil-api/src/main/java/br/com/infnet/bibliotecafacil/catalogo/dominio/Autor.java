@@ -1,0 +1,76 @@
+package br.com.infnet.bibliotecafacil.catalogo.dominio;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import java.time.LocalDateTime;
+
+@Entity
+public class Autor {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(nullable = false, unique = true)
+    private String nome;
+    @Column(nullable = false)
+    private String nomeCatalogacao;
+    private boolean ativo = true;
+    private LocalDateTime dataCriacao = LocalDateTime.now();
+    private LocalDateTime dataAtualizacao = this.dataCriacao;
+
+    public void setId(final Long id) {
+        this.id = id;
+    }
+
+    public void setNome(final String nome) {
+        this.nome = nome;
+    }
+
+    public void setNomeCatalogacao(final String nomeCatalogacao) {
+        this.nomeCatalogacao = nomeCatalogacao;
+    }
+
+    public void setAtivo(final boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    public void setDataAtualizacao(final LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public String getNome() {
+        return this.nome;
+    }
+
+    public String getNomeCatalogacao() {
+        return this.nomeCatalogacao;
+    }
+
+    public boolean isAtivo() {
+        return this.ativo;
+    }
+
+    public LocalDateTime getDataCriacao() {
+        return this.dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return this.dataAtualizacao;
+    }
+
+    @Override
+    public String toString() {
+        return ("Autor{id=%s, nome='%s', nomeCatalogacao='%s', ativo=%s, "
+                + "dataCriacao=%s, dataAtualizacao=%s}")
+                .formatted(this.id, this.nome, this.nomeCatalogacao, this.ativo,
+                        this.dataCriacao, this.dataAtualizacao);
+    }
+
+}
