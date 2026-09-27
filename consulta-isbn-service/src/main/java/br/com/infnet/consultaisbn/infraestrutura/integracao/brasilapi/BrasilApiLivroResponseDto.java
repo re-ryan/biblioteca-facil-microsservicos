@@ -1,10 +1,11 @@
-package br.com.infnet.bibliotecafacil.catalogo.infraestrutura.integracao.isbn;
+package br.com.infnet.consultaisbn.infraestrutura.integracao.brasilapi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record BrasilApiLivroResponseDto(
+        @JsonProperty("isbn") String isbn,
         @JsonProperty("title") String titulo,
         @JsonProperty("publisher") String editora,
         @JsonProperty("synopsis") String descricao,

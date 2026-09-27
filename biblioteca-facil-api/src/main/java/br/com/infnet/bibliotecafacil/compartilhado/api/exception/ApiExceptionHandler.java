@@ -3,6 +3,7 @@ package br.com.infnet.bibliotecafacil.compartilhado.api.exception;
 import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.DadosInvalidosException;
 import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.ObjetoNaoEncontradoException;
 import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.OperacaoNaoPermitidaException;
+import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.ServicoConsultaIsbnIndisponivelException;
 import java.time.LocalDateTime;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +21,12 @@ public final class ApiExceptionHandler {
     @ExceptionHandler(ObjetoNaoEncontradoException.class)
     public ResponseEntity<ErroApi> tratarNaoEncontrado(final ObjetoNaoEncontradoException exception) {
         return this.criarResposta(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ServicoConsultaIsbnIndisponivelException.class)
+    public ResponseEntity<ErroApi> tratarServicoIndisponivel(
+            final ServicoConsultaIsbnIndisponivelException exception) {
+        return this.criarResposta(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -57,9 +57,9 @@ public final class LivroController {
 
     @PostMapping
     @Operation(summary = "Inclui um livro",
-            description = "Consulta o ISBN na BrasilAPI antes do cadastro. Se houver dados externos, "
-                    + "eles substituem os dados correspondentes; se a consulta falhar ou não encontrar o ISBN, "
-                    + "o cadastro segue normalmente com os dados da requisição.")
+            description = "Consulta o serviço independente de ISBN antes do cadastro. Dados bibliográficos "
+                    + "encontrados substituem os campos correspondentes. Um ISBN não encontrado mantém os dados "
+                    + "informados; a indisponibilidade do serviço retorna HTTP 503 e impede persistência parcial.")
     public ResponseEntity<Livro> incluir(final @Valid @RequestBody LivroRequestDto request) {
         final Livro livro = this.criarLivro(request);
         final Livro livroIncluido = this.cadastroLivroService.incluir(livro);
