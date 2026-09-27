@@ -1,8 +1,9 @@
 package br.com.infnet.bibliotecafacil.catalogo.aplicacao.service;
 
 import br.com.infnet.bibliotecafacil.catalogo.dominio.Livro;
-import br.com.infnet.bibliotecafacil.catalogo.infraestrutura.integracao.isbn.BrasilApiIsbnClient;
-import br.com.infnet.bibliotecafacil.catalogo.infraestrutura.integracao.isbn.BrasilApiLivroResponseDto;
+import br.com.infnet.bibliotecafacil.catalogo.infraestrutura.integracao.isbn.ConsultaIsbnClient;
+import br.com.infnet.bibliotecafacil.catalogo.infraestrutura.integracao.isbn.MetadadosLivroResponseDto;
+import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.ServicoConsultaIsbnIndisponivelException;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +14,10 @@ public final class ConsultaIsbnService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsultaIsbnService.class);
 
-    private final BrasilApiIsbnClient brasilApiIsbnClient;
+    private final ConsultaIsbnClient consultaIsbnClient;
 
-    public ConsultaIsbnService(final BrasilApiIsbnClient brasilApiIsbnClient) {
-        this.brasilApiIsbnClient = brasilApiIsbnClient;
+    public ConsultaIsbnService(final ConsultaIsbnClient consultaIsbnClient) {
+        this.consultaIsbnClient = consultaIsbnClient;
     }
 
     public void consultarApi(final Livro livro) {
@@ -25,17 +26,20 @@ public final class ConsultaIsbnService {
         }
 
         try {
-            final BrasilApiLivroResponseDto dadosExternos = this.brasilApiIsbnClient.consultar(livro.getIsbn13());
+            final MetadadosLivroResponseDto dadosExternos = this.consultaIsbnClient.consultar(livro.getIsbn13());
             this.copiarDados(livro, dadosExternos);
         } catch (final FeignException.NotFound exception) {
-            LOGGER.info("ISBN {} não encontrado na BrasilAPI. O cadastro usará os dados informados.", livro.getIsbn13());
+            LOGGER.info("ISBN {} não encontrado pelo serviço de consulta. "
+                    + "O cadastro usará os dados informados.", livro.getIsbn13());
         } catch (final FeignException exception) {
-            LOGGER.warn("Não foi possível consultar o ISBN {} na BrasilAPI. "
-                    + "O cadastro usará os dados informados. Status: {}.", livro.getIsbn13(), exception.status());
+            LOGGER.warn("O serviço de consulta ISBN está indisponível para o ISBN {}. Status remoto: {}.",
+                    livro.getIsbn13(), exception.status());
+            throw new ServicoConsultaIsbnIndisponivelException(
+                    "O serviço de consulta de ISBN está temporariamente indisponível.");
         }
     }
 
-    private void copiarDados(final Livro livro, final BrasilApiLivroResponseDto dadosExternos) {
+    private void copiarDados(final Livro livro, final MetadadosLivroResponseDto dadosExternos) {
         if (dadosExternos == null) {
             return;
         }

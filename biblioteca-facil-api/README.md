@@ -1,6 +1,6 @@
 # Biblioteca Facil API
 
-Aplicacao Spring Boot que compoe integralmente a Etapa 1. Ela mantem o catalogo, as bibliotecas, os usuarios, o acervo e as reservas em um unico processo, organizado internamente por capacidade de negocio.
+Aplicacao principal do Biblioteca Facil. Ela mantem o catalogo, as bibliotecas, os usuarios, o acervo e as reservas, organizada internamente por capacidade de negocio. Desde a Etapa 2, a consulta de metadados por ISBN e realizada pelo projeto independente `consulta-isbn-service`.
 
 ## Estrutura interna
 
@@ -26,8 +26,7 @@ br.com.infnet.bibliotecafacil
 |   |-- aplicacao/
 |   |-- dominio/
 |   `-- infraestrutura/
-|-- compartilhado/
-`-- bootstrap/
+`-- compartilhado/
 ```
 
 As pastas internas sao criadas conforme a necessidade de cada modulo:
@@ -42,7 +41,9 @@ As pastas internas sao criadas conforme a necessidade de cada modulo:
 - `ReservaService` consulta usuarios por `UsuarioService` e altera disponibilidade por `AcervoService`.
 - `CadastroUsuarioService` concentra a criacao dos tipos de usuario e o vinculo de bibliotecarios.
 - Controllers mapeiam requisicoes e respostas, sem acesso direto a repositories.
-- A consulta ISBN permanece interna ao modulo Catalogo e usa OpenFeign para acessar a BrasilAPI.
+- O cadastro de livros usa `ConsultaIsbnClient` para acessar o servico ISBN por OpenFeign.
+- A aplicacao nao conhece mais o contrato nem o endereco da BrasilAPI.
+- ISBN nao encontrado mantem os dados informados; indisponibilidade do servico ISBN retorna HTTP 503.
 
 ## Persistencia, validacao e erros
 
@@ -56,6 +57,7 @@ As pastas internas sao criadas conforme a necessidade de cada modulo:
 Na raiz do monorepositorio:
 
 ```bash
+mvn -pl consulta-isbn-service spring-boot:run
 mvn -pl biblioteca-facil-api spring-boot:run
 ```
 
@@ -87,4 +89,4 @@ Na raiz do monorepositorio ou deste modulo:
 mvn test
 ```
 
-A colecao de validacao manual esta em `postman/Biblioteca-Facil-Baseline.postman_collection.json`.
+A colecao integrada da etapa esta em `../postman/Biblioteca-Facil-Etapa-2.postman_collection.json`.

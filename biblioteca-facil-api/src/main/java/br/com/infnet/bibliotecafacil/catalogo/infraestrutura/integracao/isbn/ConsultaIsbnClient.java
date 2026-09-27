@@ -4,9 +4,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "brasilApiIsbnClient", url = "${integracao.brasilapi.url}")
-public interface BrasilApiIsbnClient {
+@FeignClient(name = "consultaIsbnClient", url = "${servicos.consulta-isbn.url}")
+public interface ConsultaIsbnClient {
 
-    @GetMapping("/api/isbn/v1/{isbn}")
-    BrasilApiLivroResponseDto consultar(final @PathVariable String isbn);
+    @GetMapping("/api/isbn/{isbn}")
+    MetadadosLivroResponseDto consultar(final @PathVariable String isbn);
 }

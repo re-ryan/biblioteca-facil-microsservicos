@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Biblioteca Fácil - Etapa 4",
-    "description": "Requisições da API REST com persistência JPA, validação, consultas ordenadas e enriquecimento de livros por ISBN com a BrasilAPI. Execute a coleção na ordem apresentada.",
+    "name": "Biblioteca Fácil - Baseline da Aplicação Principal",
+    "description": "Requisições da API principal com persistência JPA, validação e consultas ordenadas. O cadastro por ISBN depende do consulta-isbn-service desde a Etapa 2. Execute a coleção na ordem apresentada.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

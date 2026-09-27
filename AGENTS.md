@@ -47,6 +47,7 @@ Este repositorio abriga o projeto da disciplina **Arquiteturas Avancadas de Soft
 
 - Faca mudancas pequenas, coesas e rastreaveis.
 - Nao reformate arquivos sem relacao com a tarefa.
+- Escreva README e documentacao publica com linguagem natural, direta e proporcional ao leitor; nao exponha processos internos de IA, estados de autorizacao ou estrutura de relatorios locais.
 - Comentarios devem explicar restricoes ou decisoes nao obvias; o codigo deve explicar o fluxo normal.
 - Ao introduzir dependencia, explique a necessidade e prefira versoes centralizadas pelo build.
 - Mensagens de commit, quando solicitadas, devem ser imperativas e descrever uma unica intencao.
@@ -61,8 +62,10 @@ Este repositorio abriga o projeto da disciplina **Arquiteturas Avancadas de Soft
 - Mantenha os dois relatorios sincronizados com o estado final do codigo, mas nunca os inclua em commits ou tags; todo o diretorio `.ai/` permanece local e ignorado pelo Git.
 - Ao concluir uma etapa, revise o diff completo, execute as verificacoes aplicaveis e crie um unico commit de marco.
 - Crie a tag correspondente (`etapa-1`, `etapa-2`, `etapa-3` ou `etapa-4`) apontando para esse commit.
+- Depois de criar o commit e a tag de uma etapa, envie ao remoto configurado tanto a branch quanto a tag; a etapa somente esta formalmente encerrada quando esse push for confirmado.
+- Se nao houver remoto configurado ou o push falhar, informe que a etapa esta concluida apenas localmente e trate o envio como pendencia obrigatoria.
 - O primeiro commit deste repositorio sera o marco da `etapa-1`.
-- Nao crie commit nem tag sem solicitacao ou autorizacao explicita do usuario.
+- Nao crie commit, tag nem execute push sem solicitacao ou autorizacao explicita do usuario.
 
 ## Ordem de leitura recomendada
 

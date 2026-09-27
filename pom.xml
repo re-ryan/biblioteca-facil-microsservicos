@@ -14,5 +14,6 @@
 
     <modules>
         <module>biblioteca-facil-api</module>
+        <module>consulta-isbn-service</module>
     </modules>
 </project>

@@ -1,0 +1,129 @@
+{
+  "info": {
+    "name": "Biblioteca Fácil - Etapa 2",
+    "description": "Evidências da API isolada, comunicação entre aplicações e indisponibilidade do serviço ISBN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "apiPrincipalUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "consultaIsbnUrl",
+      "value": "http://localhost:8081"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Serviço ISBN isolado",
+      "item": [
+        {
+          "name": "Consultar ISBN válido (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{consultaIsbnUrl}}/api/isbn/9788535902778"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Serviço ISBN responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contrato não está vazio', () => pm.expect(pm.response.json().isbn).to.eql('9788535902778'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rejeitar ISBN inválido (400)",
+          "request": {
+            "method": "GET",
+            "url": "{{consultaIsbnUrl}}/api/isbn/123"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ISBN inválido responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Comunicação pela aplicação principal",
+      "item": [
+        {
+          "name": "Cadastrar livro com enriquecimento remoto (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Título provisório\",\n  \"isbn13\": \"9788545702870\",\n  \"editora\": \"Editora provisória\",\n  \"anoPublicacao\": 2000\n}"
+            },
+            "url": "{{apiPrincipalUrl}}/api/livros"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Aplicação principal responde 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Serviço ISBN indisponível",
+      "description": "Pare o consulta-isbn-service antes de executar esta pasta.",
+      "item": [
+        {
+          "name": "Cadastrar livro sem o serviço ISBN (503)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Livro não persistido\",\n  \"isbn13\": \"9783161484100\"\n}"
+            },
+            "url": "{{apiPrincipalUrl}}/api/livros"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Indisponibilidade responde 503', () => pm.response.to.have.status(503));",
+                  "pm.test('Mensagem segura', () => pm.expect(pm.response.json().mensagem).to.eql('O serviço de consulta de ISBN está temporariamente indisponível.'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
