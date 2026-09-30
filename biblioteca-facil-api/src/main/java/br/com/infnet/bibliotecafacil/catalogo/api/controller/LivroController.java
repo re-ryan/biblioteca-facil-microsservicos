@@ -1,6 +1,7 @@
 package br.com.infnet.bibliotecafacil.catalogo.api.controller;
 
 import br.com.infnet.bibliotecafacil.catalogo.api.dto.LivroRequestDto;
+import br.com.infnet.bibliotecafacil.catalogo.api.dto.LivroResponseDto;
 import br.com.infnet.bibliotecafacil.catalogo.aplicacao.service.CadastroLivroService;
 import br.com.infnet.bibliotecafacil.catalogo.aplicacao.service.LivroService;
 import br.com.infnet.bibliotecafacil.catalogo.dominio.Livro;
@@ -39,20 +40,24 @@ public final class LivroController {
     }
 
     @GetMapping
-    public List<Livro> listar() {
-        return this.livroService.listar();
+    public List<LivroResponseDto> listar() {
+        return this.livroService.listar().stream()
+                .map(LivroResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/busca")
-    public List<Livro> buscarPorTitulo(
+    public List<LivroResponseDto> buscarPorTitulo(
             final @RequestParam String titulo,
             final @ParameterObject @SortDefault(sort = "titulo", direction = Sort.Direction.ASC) Sort ordenacao) {
-        return this.livroService.buscarPorTitulo(titulo, ordenacao);
+        return this.livroService.buscarPorTitulo(titulo, ordenacao).stream()
+                .map(LivroResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Livro obterPorId(final @PathVariable Long id) {
-        return this.livroService.obterPorId(id);
+    public LivroResponseDto obterPorId(final @PathVariable Long id) {
+        return LivroResponseDto.de(this.livroService.obterPorId(id));
     }
 
     @PostMapping
@@ -60,18 +65,20 @@ public final class LivroController {
             description = "Consulta o serviço independente de ISBN antes do cadastro. Dados bibliográficos "
                     + "encontrados substituem os campos correspondentes. Um ISBN não encontrado mantém os dados "
                     + "informados; a indisponibilidade do serviço retorna HTTP 503 e impede persistência parcial.")
-    public ResponseEntity<Livro> incluir(final @Valid @RequestBody LivroRequestDto request) {
+    public ResponseEntity<LivroResponseDto> incluir(final @Valid @RequestBody LivroRequestDto request) {
         final Livro livro = this.criarLivro(request);
         final Livro livroIncluido = this.cadastroLivroService.incluir(livro);
         return ResponseEntity.created(URI.create("/api/livros/" + livroIncluido.getId()))
-                .body(livroIncluido);
+                .body(LivroResponseDto.de(livroIncluido));
     }
 
     @PutMapping("/{id}")
-    public Livro alterar(final @PathVariable Long id, final @Valid @RequestBody LivroRequestDto request) {
+    public LivroResponseDto alterar(
+            final @PathVariable Long id,
+            final @Valid @RequestBody LivroRequestDto request) {
         final Livro livroAlterado = this.criarLivro(request);
         livroAlterado.setId(id);
-        return this.livroService.alterar(livroAlterado);
+        return LivroResponseDto.de(this.livroService.alterar(livroAlterado));
     }
 
     @DeleteMapping("/{id}")

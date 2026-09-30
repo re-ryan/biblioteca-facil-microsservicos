@@ -1,6 +1,7 @@
 package br.com.infnet.bibliotecafacil.biblioteca.api.controller;
 
 import br.com.infnet.bibliotecafacil.biblioteca.api.dto.BibliotecaRequestDto;
+import br.com.infnet.bibliotecafacil.biblioteca.api.dto.BibliotecaResponseDto;
 import br.com.infnet.bibliotecafacil.biblioteca.aplicacao.service.BibliotecaService;
 import br.com.infnet.bibliotecafacil.biblioteca.dominio.Biblioteca;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,35 +34,42 @@ public final class BibliotecaController {
     }
 
     @GetMapping
-    public List<Biblioteca> listar() {
-        return this.bibliotecaService.listar();
+    public List<BibliotecaResponseDto> listar() {
+        return this.bibliotecaService.listar().stream()
+                .map(BibliotecaResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/busca")
-    public List<Biblioteca> buscarPorNome(
+    public List<BibliotecaResponseDto> buscarPorNome(
             final @RequestParam String nome,
             final @ParameterObject @SortDefault(sort = "nome", direction = Sort.Direction.ASC) Sort ordenacao) {
-        return this.bibliotecaService.buscarPorNome(nome, ordenacao);
+        return this.bibliotecaService.buscarPorNome(nome, ordenacao).stream()
+                .map(BibliotecaResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Biblioteca obterPorId(final @PathVariable Long id) {
-        return this.bibliotecaService.obterPorId(id);
+    public BibliotecaResponseDto obterPorId(final @PathVariable Long id) {
+        return BibliotecaResponseDto.de(this.bibliotecaService.obterPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Biblioteca> incluir(final @Valid @RequestBody BibliotecaRequestDto request) {
+    public ResponseEntity<BibliotecaResponseDto> incluir(
+            final @Valid @RequestBody BibliotecaRequestDto request) {
         final Biblioteca biblioteca = this.criarBiblioteca(request);
         final Biblioteca bibliotecaIncluida = this.bibliotecaService.incluir(biblioteca);
         return ResponseEntity.created(URI.create("/api/bibliotecas/" + bibliotecaIncluida.getId()))
-                .body(bibliotecaIncluida);
+                .body(BibliotecaResponseDto.de(bibliotecaIncluida));
     }
 
     @PutMapping("/{id}")
-    public Biblioteca alterar(final @PathVariable Long id, final @Valid @RequestBody BibliotecaRequestDto request) {
+    public BibliotecaResponseDto alterar(
+            final @PathVariable Long id,
+            final @Valid @RequestBody BibliotecaRequestDto request) {
         final Biblioteca biblioteca = this.criarBiblioteca(request);
         biblioteca.setId(id);
-        return this.bibliotecaService.alterar(biblioteca);
+        return BibliotecaResponseDto.de(this.bibliotecaService.alterar(biblioteca));
     }
 
     @DeleteMapping("/{id}")

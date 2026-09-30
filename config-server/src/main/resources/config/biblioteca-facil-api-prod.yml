@@ -1,0 +1,37 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+servicos:
+  consulta-isbn:
+    url: ${CONSULTA_ISBN_URL:http://consulta-isbn-service:8081}
+
+spring.cloud.openfeign.client.config.consultaIsbnClient:
+  connectTimeout: ${CONSULTA_ISBN_CONNECT_TIMEOUT:3000}
+  readTimeout: ${CONSULTA_ISBN_READ_TIMEOUT:5000}
+
+resiliencia:
+  consulta-isbn:
+    max-tentativas: ${CONSULTA_ISBN_MAX_TENTATIVAS:3}
+    intervalo-ms: ${CONSULTA_ISBN_INTERVALO_RETRY_MS:250}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

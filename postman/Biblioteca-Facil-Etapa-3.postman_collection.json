@@ -1,0 +1,220 @@
+{
+  "info": {
+    "name": "Biblioteca Fácil - Etapa 3",
+    "description": "Verificação do ambiente conteinerizado, das configurações centralizadas e da persistência PostgreSQL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "apiPrincipalUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "consultaIsbnUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "configServerUrl",
+      "value": "http://localhost:8888"
+    },
+    {
+      "key": "livroId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Saúde dos componentes",
+      "item": [
+        {
+          "name": "API principal saudável",
+          "request": {
+            "method": "GET",
+            "url": "{{apiPrincipalUrl}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API principal está UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Serviço ISBN saudável",
+          "request": {
+            "method": "GET",
+            "url": "{{consultaIsbnUrl}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Serviço ISBN está UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Config Server saudável",
+          "request": {
+            "method": "GET",
+            "url": "{{configServerUrl}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Config Server está UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Configuração centralizada",
+      "item": [
+        {
+          "name": "Configuração prod da API principal",
+          "request": {
+            "method": "GET",
+            "url": "{{configServerUrl}}/biblioteca-facil-api/prod"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Perfil prod foi publicado', () => pm.expect(pm.response.json().profiles).to.include('prod'));",
+                  "pm.test('Há uma fonte de configuração', () => pm.expect(pm.response.json().propertySources.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuração dev do serviço ISBN",
+          "request": {
+            "method": "GET",
+            "url": "{{configServerUrl}}/consulta-isbn-service/dev"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Perfil dev foi publicado', () => pm.expect(pm.response.json().profiles).to.include('dev'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Comunicação e persistência",
+      "item": [
+        {
+          "name": "Consultar ISBN diretamente",
+          "request": {
+            "method": "GET",
+            "url": "{{consultaIsbnUrl}}/api/isbn/9788545702870"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Consulta ISBN responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ISBN retornado corresponde ao pedido', () => pm.expect(pm.response.json().isbn).to.eql('9788545702870'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar livro com enriquecimento remoto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Título provisório da Etapa 3\",\n  \"isbn13\": \"9788545702870\",\n  \"editora\": \"Editora provisória\"\n}"
+            },
+            "url": "{{apiPrincipalUrl}}/api/livros"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cadastro integrado responde 201', () => pm.response.to.have.status(201));",
+                  "const livro = pm.response.json();",
+                  "pm.collectionVariables.set('livroId', livro.id);",
+                  "pm.test('Livro recebeu identificador persistido', () => pm.expect(livro.id).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ler livro persistido",
+          "request": {
+            "method": "GET",
+            "url": "{{apiPrincipalUrl}}/api/livros/{{livroId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Registro persistido responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Identificador é o cadastrado', () => pm.expect(String(pm.response.json().id)).to.eql(pm.collectionVariables.get('livroId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Excluir livro de validação",
+          "request": {
+            "method": "DELETE",
+            "url": "{{apiPrincipalUrl}}/api/livros/{{livroId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limpeza responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
