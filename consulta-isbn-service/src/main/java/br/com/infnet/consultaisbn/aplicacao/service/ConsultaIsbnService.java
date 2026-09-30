@@ -6,10 +6,12 @@ import br.com.infnet.consultaisbn.aplicacao.exception.ProvedorBibliograficoIndis
 import br.com.infnet.consultaisbn.infraestrutura.integracao.brasilapi.BrasilApiIsbnClient;
 import br.com.infnet.consultaisbn.infraestrutura.integracao.brasilapi.BrasilApiLivroResponseDto;
 import feign.FeignException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
-public final class ConsultaIsbnService {
+public class ConsultaIsbnService {
 
     private final BrasilApiIsbnClient brasilApiIsbnClient;
 
@@ -17,6 +19,10 @@ public final class ConsultaIsbnService {
         this.brasilApiIsbnClient = brasilApiIsbnClient;
     }
 
+    @Retryable(
+            retryFor = ProvedorBibliograficoIndisponivelException.class,
+            maxAttemptsExpression = "${resiliencia.brasilapi.max-tentativas:3}",
+            backoff = @Backoff(delayExpression = "${resiliencia.brasilapi.intervalo-ms:250}"))
     public MetadadosLivroResponseDto consultar(final String isbn) {
         try {
             final BrasilApiLivroResponseDto resposta = this.brasilApiIsbnClient.consultar(isbn);

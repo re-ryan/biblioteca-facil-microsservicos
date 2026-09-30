@@ -1,6 +1,7 @@
 package br.com.infnet.bibliotecafacil.catalogo.api.controller;
 
 import br.com.infnet.bibliotecafacil.catalogo.api.dto.CategoriaRequestDto;
+import br.com.infnet.bibliotecafacil.catalogo.api.dto.CategoriaResponseDto;
 import br.com.infnet.bibliotecafacil.catalogo.aplicacao.service.CategoriaService;
 import br.com.infnet.bibliotecafacil.catalogo.dominio.Categoria;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,35 +34,42 @@ public final class CategoriaController {
     }
 
     @GetMapping
-    public List<Categoria> listar() {
-        return this.categoriaService.listar();
+    public List<CategoriaResponseDto> listar() {
+        return this.categoriaService.listar().stream()
+                .map(CategoriaResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/busca")
-    public List<Categoria> buscarPorNome(
+    public List<CategoriaResponseDto> buscarPorNome(
             final @RequestParam String nome,
             final @ParameterObject @SortDefault(sort = "nome", direction = Sort.Direction.ASC) Sort ordenacao) {
-        return this.categoriaService.buscarPorNome(nome, ordenacao);
+        return this.categoriaService.buscarPorNome(nome, ordenacao).stream()
+                .map(CategoriaResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Categoria obterPorId(final @PathVariable Long id) {
-        return this.categoriaService.obterPorId(id);
+    public CategoriaResponseDto obterPorId(final @PathVariable Long id) {
+        return CategoriaResponseDto.de(this.categoriaService.obterPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Categoria> incluir(final @Valid @RequestBody CategoriaRequestDto request) {
+    public ResponseEntity<CategoriaResponseDto> incluir(
+            final @Valid @RequestBody CategoriaRequestDto request) {
         final Categoria categoria = this.criarCategoria(request);
         final Categoria categoriaIncluida = this.categoriaService.incluir(categoria);
         return ResponseEntity.created(URI.create("/api/categorias/" + categoriaIncluida.getId()))
-                .body(categoriaIncluida);
+                .body(CategoriaResponseDto.de(categoriaIncluida));
     }
 
     @PutMapping("/{id}")
-    public Categoria alterar(final @PathVariable Long id, final @Valid @RequestBody CategoriaRequestDto request) {
+    public CategoriaResponseDto alterar(
+            final @PathVariable Long id,
+            final @Valid @RequestBody CategoriaRequestDto request) {
         final Categoria categoria = this.criarCategoria(request);
         categoria.setId(id);
-        return this.categoriaService.alterar(categoria);
+        return CategoriaResponseDto.de(this.categoriaService.alterar(categoria));
     }
 
     @DeleteMapping("/{id}")

@@ -7,10 +7,12 @@ import br.com.infnet.bibliotecafacil.compartilhado.aplicacao.exception.ServicoCo
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
-public final class ConsultaIsbnService {
+public class ConsultaIsbnService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsultaIsbnService.class);
 
@@ -20,6 +22,10 @@ public final class ConsultaIsbnService {
         this.consultaIsbnClient = consultaIsbnClient;
     }
 
+    @Retryable(
+            retryFor = ServicoConsultaIsbnIndisponivelException.class,
+            maxAttemptsExpression = "${resiliencia.consulta-isbn.max-tentativas:3}",
+            backoff = @Backoff(delayExpression = "${resiliencia.consulta-isbn.intervalo-ms:250}"))
     public void consultarApi(final Livro livro) {
         if (livro == null || livro.getIsbn13() == null || livro.getIsbn13().isBlank()) {
             return;

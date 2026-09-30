@@ -1,76 +1,46 @@
-# Biblioteca Facil API
+# Biblioteca Fácil API
 
-Aplicacao principal do Biblioteca Facil. Ela mantem o catalogo, as bibliotecas, os usuarios, o acervo e as reservas, organizada internamente por capacidade de negocio. Desde a Etapa 2, a consulta de metadados por ISBN e realizada pelo projeto independente `consulta-isbn-service`.
+Aplicação principal do Biblioteca Fácil. Ela mantém catálogo, bibliotecas, usuários, acervo e reservas, organizada internamente por capacidade de negócio. A consulta de metadados por ISBN é feita pelo projeto independente `consulta-isbn-service`.
 
-## Estrutura interna
+## Persistência
 
-```text
-br.com.infnet.bibliotecafacil
-|-- catalogo/
-|   |-- api/
-|   |-- aplicacao/
-|   |-- dominio/
-|   `-- infraestrutura/
-|-- biblioteca/
-|   |-- api/
-|   |-- aplicacao/
-|   |-- dominio/
-|   `-- infraestrutura/
-|-- usuario/
-|   |-- api/
-|   |-- aplicacao/
-|   |-- dominio/
-|   `-- infraestrutura/
-|-- reserva/
-|   |-- api/
-|   |-- aplicacao/
-|   |-- dominio/
-|   `-- infraestrutura/
-`-- compartilhado/
-```
+Em execução normal, a aplicação usa PostgreSQL. O Flyway aplica as migrações de `src/main/resources/db/migration` e o Hibernate valida o esquema com `ddl-auto=validate`. O H2 permanece somente no escopo de testes, para manter os testes automatizados rápidos e isolados.
 
-As pastas internas sao criadas conforme a necessidade de cada modulo:
+Este é o único serviço que acessa esse banco. O serviço ISBN não compartilha entidades, repositories ou tabelas com a aplicação principal.
 
-- `api`: controllers e contratos HTTP;
-- `aplicacao`: casos de uso, coordenacao e regras da aplicacao;
-- `dominio`: entidades, enums e valores do dominio;
-- `infraestrutura`: repositories JPA e clientes externos.
+Os controllers retornam DTOs de saída em vez de entidades JPA. Por isso, `spring.jpa.open-in-view` fica desativado e a serialização HTTP não mantém a sessão do Hibernate aberta durante toda a requisição.
 
-## Fronteiras relevantes
+## Configuração
 
-- `ReservaService` consulta usuarios por `UsuarioService` e altera disponibilidade por `AcervoService`.
-- `CadastroUsuarioService` concentra a criacao dos tipos de usuario e o vinculo de bibliotecarios.
-- Controllers mapeiam requisicoes e respostas, sem acesso direto a repositories.
-- O cadastro de livros usa `ConsultaIsbnClient` para acessar o servico ISBN por OpenFeign.
-- A aplicacao nao conhece mais o contrato nem o endereco da BrasilAPI.
-- ISBN nao encontrado mantem os dados informados; indisponibilidade do servico ISBN retorna HTTP 503.
+O arquivo local `application.yml` informa o nome da aplicação, o perfil ativo e o endereço do Config Server. Portas, URL do serviço ISBN, timeouts e parâmetros de persistência são obtidos centralmente. URL, usuário e senha do banco podem ser sobrescritos por:
 
-## Persistencia, validacao e erros
+- `SPRING_DATASOURCE_URL`;
+- `SPRING_DATASOURCE_USERNAME`;
+- `SPRING_DATASOURCE_PASSWORD`.
 
-- H2 e Spring Data JPA compoem a persistencia da Etapa 1.
-- Os DTOs de entrada usam Bean Validation e os controllers ativam a validacao com `@Valid`.
-- O tratamento centralizado converte validacoes, recursos inexistentes e violacoes de regras de negocio em respostas HTTP sem expor detalhes internos.
-- Os repositories incluem consultas derivadas e JPQL voltadas a buscas por nome, ISBN, disponibilidade, associacoes e status de reserva.
+O perfil padrão é `dev`; o Docker Compose ativa `prod`.
 
-## Execucao
+A consulta ao serviço ISBN possui até três tentativas por padrão porque é uma operação GET idempotente. O limite e o intervalo são configurados por `CONSULTA_ISBN_MAX_TENTATIVAS` e `CONSULTA_ISBN_INTERVALO_RETRY_MS`. ISBN não encontrado não é repetido.
 
-Na raiz do monorepositorio:
+## Execução
+
+A forma recomendada é iniciar o conjunto pela raiz do repositório:
 
 ```bash
-mvn -pl consulta-isbn-service spring-boot:run
+docker compose up --build -d
+```
+
+Para executar pelo Maven, inicie antes o Config Server e disponibilize um PostgreSQL compatível com as variáveis de ambiente:
+
+```bash
 mvn -pl biblioteca-facil-api spring-boot:run
 ```
 
-Ou neste diretorio:
-
-```bash
-mvn spring-boot:run
-```
-
-## Documentacao da API
+## API
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI: `http://localhost:8080/v3/api-docs`
+- Saúde: `http://localhost:8080/actuator/health`
 
 Recursos principais:
 
@@ -83,10 +53,8 @@ Recursos principais:
 
 ## Testes
 
-Na raiz do monorepositorio ou deste modulo:
+Na raiz do repositório ou deste módulo:
 
 ```bash
 mvn test
 ```
-
-A colecao integrada da etapa esta em `../postman/Biblioteca-Facil-Etapa-2.postman_collection.json`.

@@ -1,6 +1,7 @@
 package br.com.infnet.bibliotecafacil.usuario.api.controller;
 
 import br.com.infnet.bibliotecafacil.usuario.api.dto.UsuarioRequestDto;
+import br.com.infnet.bibliotecafacil.usuario.api.dto.UsuarioResponseDto;
 import br.com.infnet.bibliotecafacil.usuario.aplicacao.command.UsuarioCommand;
 import br.com.infnet.bibliotecafacil.usuario.aplicacao.service.CadastroUsuarioService;
 import br.com.infnet.bibliotecafacil.usuario.aplicacao.service.UsuarioService;
@@ -39,32 +40,40 @@ public final class UsuarioController {
     }
 
     @GetMapping
-    public List<Usuario> listar() {
-        return this.usuarioService.listar();
+    public List<UsuarioResponseDto> listar() {
+        return this.usuarioService.listar().stream()
+                .map(UsuarioResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/busca")
-    public List<Usuario> buscarPorNome(
+    public List<UsuarioResponseDto> buscarPorNome(
             final @RequestParam String nome,
             final @ParameterObject @SortDefault(sort = "nomeCompleto", direction = Sort.Direction.ASC) Sort ordenacao) {
-        return this.usuarioService.buscarPorNome(nome, ordenacao);
+        return this.usuarioService.buscarPorNome(nome, ordenacao).stream()
+                .map(UsuarioResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Usuario obterPorId(final @PathVariable Long id) {
-        return this.usuarioService.obterPorId(id);
+    public UsuarioResponseDto obterPorId(final @PathVariable Long id) {
+        return UsuarioResponseDto.de(this.usuarioService.obterPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> incluir(final @Valid @RequestBody UsuarioRequestDto request) {
+    public ResponseEntity<UsuarioResponseDto> incluir(
+            final @Valid @RequestBody UsuarioRequestDto request) {
         final Usuario usuarioIncluido = this.cadastroUsuarioService.incluir(this.criarCommand(request));
         return ResponseEntity.created(URI.create("/api/usuarios/" + usuarioIncluido.getId()))
-                .body(usuarioIncluido);
+                .body(UsuarioResponseDto.de(usuarioIncluido));
     }
 
     @PutMapping("/{id}")
-    public Usuario alterar(final @PathVariable Long id, final @Valid @RequestBody UsuarioRequestDto request) {
-        return this.cadastroUsuarioService.alterar(id, this.criarCommand(request));
+    public UsuarioResponseDto alterar(
+            final @PathVariable Long id,
+            final @Valid @RequestBody UsuarioRequestDto request) {
+        return UsuarioResponseDto.de(
+                this.cadastroUsuarioService.alterar(id, this.criarCommand(request)));
     }
 
     @DeleteMapping("/{id}")

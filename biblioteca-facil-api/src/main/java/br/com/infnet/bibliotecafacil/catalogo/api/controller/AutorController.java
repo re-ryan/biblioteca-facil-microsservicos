@@ -1,6 +1,7 @@
 package br.com.infnet.bibliotecafacil.catalogo.api.controller;
 
 import br.com.infnet.bibliotecafacil.catalogo.api.dto.AutorRequestDto;
+import br.com.infnet.bibliotecafacil.catalogo.api.dto.AutorResponseDto;
 import br.com.infnet.bibliotecafacil.catalogo.aplicacao.service.AutorService;
 import br.com.infnet.bibliotecafacil.catalogo.dominio.Autor;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,35 +34,41 @@ public final class AutorController {
     }
 
     @GetMapping
-    public List<Autor> listar() {
-        return this.autorService.listar();
+    public List<AutorResponseDto> listar() {
+        return this.autorService.listar().stream()
+                .map(AutorResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/busca")
-    public List<Autor> buscarPorNome(
+    public List<AutorResponseDto> buscarPorNome(
             final @RequestParam String nome,
             final @ParameterObject @SortDefault(sort = "nome", direction = Sort.Direction.ASC) Sort ordenacao) {
-        return this.autorService.buscarPorNome(nome, ordenacao);
+        return this.autorService.buscarPorNome(nome, ordenacao).stream()
+                .map(AutorResponseDto::de)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Autor obterPorId(final @PathVariable Long id) {
-        return this.autorService.obterPorId(id);
+    public AutorResponseDto obterPorId(final @PathVariable Long id) {
+        return AutorResponseDto.de(this.autorService.obterPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Autor> incluir(final @Valid @RequestBody AutorRequestDto request) {
+    public ResponseEntity<AutorResponseDto> incluir(final @Valid @RequestBody AutorRequestDto request) {
         final Autor autor = this.criarAutor(request);
         final Autor autorIncluido = this.autorService.incluir(autor);
         return ResponseEntity.created(URI.create("/api/autores/" + autorIncluido.getId()))
-                .body(autorIncluido);
+                .body(AutorResponseDto.de(autorIncluido));
     }
 
     @PutMapping("/{id}")
-    public Autor alterar(final @PathVariable Long id, final @Valid @RequestBody AutorRequestDto request) {
+    public AutorResponseDto alterar(
+            final @PathVariable Long id,
+            final @Valid @RequestBody AutorRequestDto request) {
         final Autor autor = this.criarAutor(request);
         autor.setId(id);
-        return this.autorService.alterar(autor);
+        return AutorResponseDto.de(this.autorService.alterar(autor));
     }
 
     @DeleteMapping("/{id}")
