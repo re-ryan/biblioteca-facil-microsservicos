@@ -12,6 +12,16 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:biblioteca}
+    password: ${RABBITMQ_PASSWORD:}
 
 servicos:
   consulta-isbn:
@@ -25,6 +35,19 @@ resiliencia:
   consulta-isbn:
     max-tentativas: ${CONSULTA_ISBN_MAX_TENTATIVAS:3}
     intervalo-ms: ${CONSULTA_ISBN_INTERVALO_RETRY_MS:250}
+
+mensageria:
+  publicacao-habilitada: true
+  exchange: ${RESERVAS_EXCHANGE:biblioteca.reservas}
+  filas:
+    reserva-solicitada: ${RESERVA_SOLICITADA_QUEUE:biblioteca.reserva-solicitada}
+  routing-keys:
+    reserva-solicitada: ${RESERVA_SOLICITADA_ROUTING_KEY:reserva.solicitada}
+
+batch:
+  importacao-livros:
+    arquivo: ${IMPORTACAO_LIVROS_ARQUIVO:./dados/livros.csv}
+    tamanho-chunk: ${IMPORTACAO_LIVROS_CHUNK:10}
 
 management:
   endpoints:

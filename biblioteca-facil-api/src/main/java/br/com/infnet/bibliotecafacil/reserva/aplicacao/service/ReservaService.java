@@ -14,6 +14,9 @@ import br.com.infnet.bibliotecafacil.reserva.infraestrutura.repository.ReservaRe
 import br.com.infnet.bibliotecafacil.usuario.aplicacao.service.UsuarioService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+import br.com.infnet.bibliotecafacil.reserva.aplicacao.evento.ReservaSolicitadaEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +27,17 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final UsuarioService usuarioService;
     private final AcervoService acervoService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public ReservaService(
             final ReservaRepository reservaRepository,
             final UsuarioService usuarioService,
-            final AcervoService acervoService) {
+            final AcervoService acervoService,
+            final ApplicationEventPublisher applicationEventPublisher) {
         this.reservaRepository = reservaRepository;
         this.usuarioService = usuarioService;
         this.acervoService = acervoService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
@@ -46,7 +52,17 @@ public class ReservaService {
         reserva.setAcervo(acervo);
         reserva.setDataReserva(LocalDateTime.now());
         reserva.setStatus(StatusReserva.PENDENTE);
-        return this.reservaRepository.save(reserva);
+        final Reserva reservaSalva = this.reservaRepository.save(reserva);
+        this.applicationEventPublisher.publishEvent(new ReservaSolicitadaEvent(
+                UUID.randomUUID(),
+                "RESERVA_SOLICITADA",
+                reservaSalva.getId(),
+                leitor.getId(),
+                leitor.getEmail(),
+                acervo.getLivro().getTitulo(),
+                acervo.getBiblioteca().getNome(),
+                LocalDateTime.now()));
+        return reservaSalva;
     }
 
     @Transactional

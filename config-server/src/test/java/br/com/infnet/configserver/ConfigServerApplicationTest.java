@@ -20,13 +20,15 @@ class ConfigServerApplicationTest {
     private TestRestTemplate clienteHttp;
 
     @Test
-    void devePublicarConfiguracoesDosDoisServicos() {
+    void devePublicarConfiguracoesDosServicos() {
         final ParameterizedTypeReference<Map<String, Object>> tipoResposta =
                 new ParameterizedTypeReference<>() { };
         final ResponseEntity<Map<String, Object>> configuracaoApi = this.clienteHttp.exchange(
                 "/biblioteca-facil-api/prod", HttpMethod.GET, null, tipoResposta);
         final ResponseEntity<Map<String, Object>> configuracaoIsbn = this.clienteHttp.exchange(
                 "/consulta-isbn-service/dev", HttpMethod.GET, null, tipoResposta);
+        final ResponseEntity<Map<String, Object>> configuracaoNotificacao = this.clienteHttp.exchange(
+                "/notificacao-service/prod", HttpMethod.GET, null, tipoResposta);
 
         assertThat(configuracaoApi.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(configuracaoApi.getBody()).isNotNull();
@@ -38,7 +40,10 @@ class ConfigServerApplicationTest {
                         "spring.datasource.url",
                         "servicos.consulta-isbn.url",
                         "resiliencia.consulta-isbn.max-tentativas",
-                        "resiliencia.consulta-isbn.intervalo-ms");
+                        "resiliencia.consulta-isbn.intervalo-ms",
+                        "mensageria.exchange",
+                        "batch.importacao-livros.arquivo",
+                        "batch.importacao-livros.tamanho-chunk");
 
         assertThat(configuracaoIsbn.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(configuracaoIsbn.getBody()).isNotNull();
@@ -49,6 +54,16 @@ class ConfigServerApplicationTest {
                         "integracao.brasilapi.url",
                         "resiliencia.brasilapi.max-tentativas",
                         "resiliencia.brasilapi.intervalo-ms");
+
+        assertThat(configuracaoNotificacao.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(configuracaoNotificacao.getBody()).isNotNull();
+        assertThat(configuracaoNotificacao.getBody().get("profiles")).isEqualTo(List.of("prod"));
+        assertThat((List<?>) configuracaoNotificacao.getBody().get("propertySources")).isNotEmpty();
+        assertThat(this.extrairPropriedades(configuracaoNotificacao))
+                .containsKeys(
+                        "spring.rabbitmq.host",
+                        "mensageria.exchange",
+                        "mensageria.filas.reserva-solicitada");
     }
 
     @SuppressWarnings("unchecked")

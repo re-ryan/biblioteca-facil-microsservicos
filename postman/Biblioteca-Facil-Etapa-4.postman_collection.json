@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "Biblioteca Fácil - Etapa 4",
+    "description": "Demonstração da importação Spring Batch e do fluxo assíncrono de reservas pelo RabbitMQ. Para testar retenção, pare notificacao-service antes de solicitar a reserva e inicie-o novamente antes da última consulta.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "apiPrincipalUrl", "value": "http://localhost:8080" },
+    { "key": "notificacaoUrl", "value": "http://localhost:8082" },
+    { "key": "configServerUrl", "value": "http://localhost:8888" },
+    { "key": "leitorId", "value": "1" },
+    { "key": "acervoId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Infraestrutura",
+      "item": [
+        {
+          "name": "API principal saudável",
+          "request": { "method": "GET", "url": "{{apiPrincipalUrl}}/actuator/health" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('API principal está UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ] }
+          }]
+        },
+        {
+          "name": "Serviço de notificação saudável",
+          "request": { "method": "GET", "url": "{{notificacaoUrl}}/actuator/health" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Serviço de notificação está UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ] }
+          }]
+        },
+        {
+          "name": "Configuração prod da notificação",
+          "request": { "method": "GET", "url": "{{configServerUrl}}/notificacao-service/prod" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Configuração possui fonte', () => pm.expect(pm.response.json().propertySources.length).to.be.above(0));"
+            ] }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "2. Spring Batch",
+      "item": [
+        {
+          "name": "Importar livros do CSV",
+          "request": { "method": "POST", "url": "{{apiPrincipalUrl}}/api/importacoes/livros" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Job terminou com sucesso', () => pm.expect(pm.response.json().status).to.eql('COMPLETED'));",
+              "pm.test('CSV produziu registros', () => pm.expect(pm.response.json().registrosImportados).to.be.above(0));"
+            ] }
+          }]
+        },
+        {
+          "name": "Conferir livros persistidos",
+          "request": { "method": "GET", "url": "{{apiPrincipalUrl}}/api/livros" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Catálogo possui os itens importados', () => pm.expect(pm.response.json().length).to.be.at.least(4));"
+            ] }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "3. Mensageria de reservas",
+      "item": [
+        {
+          "name": "Solicitar reserva e publicar evento",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leitorId\": {{leitorId}},\n  \"acervoId\": {{acervoId}}\n}"
+            },
+            "url": "{{apiPrincipalUrl}}/api/reservas"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Reserva foi aceita sem aguardar consumidor', () => pm.response.to.have.status(201));"
+            ] }
+          }]
+        },
+        {
+          "name": "Conferir notificação consumida",
+          "request": { "method": "GET", "url": "{{notificacaoUrl}}/api/notificacoes" },
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Há uma notificação processada', () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ] }
+          }]
+        }
+      ]
+    }
+  ]
+}

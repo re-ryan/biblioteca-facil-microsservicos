@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:biblioteca}
+    password: ${RABBITMQ_PASSWORD:}
+
+mensageria:
+  exchange: ${RESERVAS_EXCHANGE:biblioteca.reservas}
+  filas:
+    reserva-solicitada: ${RESERVA_SOLICITADA_QUEUE:biblioteca.reserva-solicitada}
+  routing-keys:
+    reserva-solicitada: ${RESERVA_SOLICITADA_ROUTING_KEY:reserva.solicitada}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

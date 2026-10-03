@@ -1,18 +1,18 @@
 # Biblioteca Fácil API
 
-Aplicação principal do Biblioteca Fácil. Ela mantém catálogo, bibliotecas, usuários, acervo e reservas, organizada internamente por capacidade de negócio. A consulta de metadados por ISBN é feita pelo projeto independente `consulta-isbn-service`.
+Aplicação principal do Biblioteca Fácil. Ela mantém catálogo, bibliotecas, usuários, acervo e reservas, organizada internamente por capacidade de negócio. A consulta de metadados por ISBN é feita pelo projeto independente `consulta-isbn-service`; eventos de reserva são publicados no RabbitMQ para o `notificacao-service`.
 
 ## Persistência
 
 Em execução normal, a aplicação usa PostgreSQL. O Flyway aplica as migrações de `src/main/resources/db/migration` e o Hibernate valida o esquema com `ddl-auto=validate`. O H2 permanece somente no escopo de testes, para manter os testes automatizados rápidos e isolados.
 
-Este é o único serviço que acessa esse banco. O serviço ISBN não compartilha entidades, repositories ou tabelas com a aplicação principal.
+Este é o único serviço que acessa esse banco. Os serviços de ISBN e notificação não compartilham entidades, repositories ou tabelas com a aplicação principal. As tabelas `BATCH_*` armazenam o histórico técnico das importações.
 
 Os controllers retornam DTOs de saída em vez de entidades JPA. Por isso, `spring.jpa.open-in-view` fica desativado e a serialização HTTP não mantém a sessão do Hibernate aberta durante toda a requisição.
 
 ## Configuração
 
-O arquivo local `application.yml` informa o nome da aplicação, o perfil ativo e o endereço do Config Server. Portas, URL do serviço ISBN, timeouts e parâmetros de persistência são obtidos centralmente. URL, usuário e senha do banco podem ser sobrescritos por:
+O arquivo local `application.yml` informa o nome da aplicação, o perfil ativo e o endereço do Config Server. Portas, URL do serviço ISBN, timeouts, mensageria, Batch e persistência são obtidos centralmente. URL, usuário e senha do banco podem ser sobrescritos por:
 
 - `SPRING_DATASOURCE_URL`;
 - `SPRING_DATASOURCE_USERNAME`;
@@ -30,7 +30,7 @@ A forma recomendada é iniciar o conjunto pela raiz do repositório:
 docker compose up --build -d
 ```
 
-Para executar pelo Maven, inicie antes o Config Server e disponibilize um PostgreSQL compatível com as variáveis de ambiente:
+Para executar pelo Maven, inicie antes o Config Server e disponibilize PostgreSQL e RabbitMQ compatíveis com as variáveis de ambiente:
 
 ```bash
 mvn -pl biblioteca-facil-api spring-boot:run
@@ -50,6 +50,11 @@ Recursos principais:
 - `/api/bibliotecas`
 - `/api/usuarios`
 - `/api/reservas`
+- `/api/importacoes/livros`
+
+## Importação em lote
+
+`POST /api/importacoes/livros` inicia o Job que lê `dados/livros.csv`. O reader interpreta o arquivo, o processor normaliza e filtra registros inválidos e o writer aplica as regras de `LivroService` antes de persistir cada chunk. No Compose, o arquivo é montado em `/dados/livros.csv` como somente leitura.
 
 ## Testes
 

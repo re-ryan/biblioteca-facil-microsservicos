@@ -15,6 +15,24 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:4.2.9-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-biblioteca}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
   config-server:
     build:
       context: ./config-server
@@ -55,6 +73,36 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  notificacao-service:
+    build:
+      context: ./notificacao-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CONFIG_SERVER_URL: http://config-server:8888
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-biblioteca}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}
+      RESERVAS_EXCHANGE: ${RESERVAS_EXCHANGE:-biblioteca.reservas}
+      RESERVA_SOLICITADA_QUEUE: ${RESERVA_SOLICITADA_QUEUE:-biblioteca.reserva-solicitada}
+      RESERVA_SOLICITADA_ROUTING_KEY: ${RESERVA_SOLICITADA_ROUTING_KEY:-reserva.solicitada}
+    ports:
+      - "${NOTIFICACAO_SERVICE_PORT:-8082}:8082"
+    depends_on:
+      config-server:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
   biblioteca-facil-api:
     build:
       context: ./biblioteca-facil-api
@@ -69,6 +117,17 @@ services:
       CONSULTA_ISBN_READ_TIMEOUT: ${CONSULTA_ISBN_READ_TIMEOUT:-5000}
       CONSULTA_ISBN_MAX_TENTATIVAS: ${CONSULTA_ISBN_MAX_TENTATIVAS:-3}
       CONSULTA_ISBN_INTERVALO_RETRY_MS: ${CONSULTA_ISBN_INTERVALO_RETRY_MS:-250}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-biblioteca}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}
+      RESERVAS_EXCHANGE: ${RESERVAS_EXCHANGE:-biblioteca.reservas}
+      RESERVA_SOLICITADA_QUEUE: ${RESERVA_SOLICITADA_QUEUE:-biblioteca.reserva-solicitada}
+      RESERVA_SOLICITADA_ROUTING_KEY: ${RESERVA_SOLICITADA_ROUTING_KEY:-reserva.solicitada}
+      IMPORTACAO_LIVROS_ARQUIVO: /dados/livros.csv
+      IMPORTACAO_LIVROS_CHUNK: ${IMPORTACAO_LIVROS_CHUNK:-10}
+    volumes:
+      - ./biblioteca-facil-api/dados:/dados:ro
     ports:
       - "${BIBLIOTECA_API_PORT:-8080}:8080"
     depends_on:
@@ -81,6 +140,9 @@ services:
       consulta-isbn-service:
         condition: service_healthy
         restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
       interval: 5s
@@ -91,3 +153,4 @@ services:
 
 volumes:
   postgres-data:
+  rabbitmq-data:
