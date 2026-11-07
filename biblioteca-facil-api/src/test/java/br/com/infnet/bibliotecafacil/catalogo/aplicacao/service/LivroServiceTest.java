@@ -2,6 +2,7 @@ package br.com.infnet.bibliotecafacil.catalogo.aplicacao.service;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -39,6 +40,7 @@ class LivroServiceTest {
 
         this.livroService.excluir(id);
         assertEquals(List.of(), this.livroService.listar());
+        assertFalse(this.livroService.obterPorId(id).isAtivo());
     }
 
     @Test
@@ -82,6 +84,7 @@ class LivroServiceTest {
         assertAll(
                 () -> assertEquals(List.of(aHoraDaEstrela), this.livroService.listarAtivos()),
                 () -> assertEquals(List.of(aHoraDaEstrela), this.livroService.buscarPorTitulo("ESTRELA")),
+                () -> assertEquals(List.of(), this.livroService.buscarPorTitulo("DOM")),
                 () -> assertEquals(List.of(aHoraDaEstrela, domCasmurro), this.livroService.listarOrdenadosPorTitulo()),
                 () -> assertEquals(List.of("Dom Casmurro", "A Hora da Estrela"), this.livroService.listarTitulos()));
     }

@@ -118,7 +118,9 @@ public class LivroService {
     @Transactional
     public void excluir(final Long id) {
         final Livro livro = this.obterPorId(id);
-        this.livroRepository.delete(livro);
+        livro.setAtivo(false);
+        livro.setDataAtualizacao(LocalDateTime.now());
+        this.livroRepository.save(livro);
     }
 
     public Livro obterPorId(final Long id) {
@@ -130,11 +132,11 @@ public class LivroService {
     }
 
     public List<Livro> listar() {
-        return List.copyOf(this.livroRepository.findAll());
+        return List.copyOf(this.livroRepository.findByAtivoTrue());
     }
 
     public List<Livro> listarAtivos() {
-        return this.livroRepository.findByAtivoTrue();
+        return this.listar();
     }
 
     public List<Livro> buscarPorTitulo(final String titulo) {
@@ -143,7 +145,7 @@ public class LivroService {
 
     public List<Livro> buscarPorTitulo(final String titulo, final Sort ordenacao) {
         this.validarTextoDeBusca(titulo);
-        return this.livroRepository.findByTituloContainingIgnoreCase(titulo, ordenacao);
+        return this.livroRepository.findByTituloContainingIgnoreCaseAndAtivoTrue(titulo, ordenacao);
     }
 
     public List<Livro> listarOrdenadosPorTitulo() {

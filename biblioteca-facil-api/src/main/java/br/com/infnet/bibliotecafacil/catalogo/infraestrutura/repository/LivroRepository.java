@@ -17,5 +17,5 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 
     List<Livro> findByAtivoTrue();
 
-    List<Livro> findByTituloContainingIgnoreCase(String titulo, Sort ordenacao);
+    List<Livro> findByTituloContainingIgnoreCaseAndAtivoTrue(String titulo, Sort ordenacao);
 }
