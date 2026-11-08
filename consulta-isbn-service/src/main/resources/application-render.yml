@@ -1,0 +1,29 @@
+server:
+  port: ${PORT:8081}
+
+integracao:
+  brasilapi:
+    url: ${BRASIL_API_URL:https://brasilapi.com.br}
+
+spring.cloud.openfeign.client.config.brasilApiIsbnClient:
+  connectTimeout: ${BRASIL_API_CONNECT_TIMEOUT:3000}
+  readTimeout: ${BRASIL_API_READ_TIMEOUT:5000}
+
+resiliencia:
+  brasilapi:
+    max-tentativas: ${BRASIL_API_MAX_TENTATIVAS:3}
+    intervalo-ms: ${BRASIL_API_INTERVALO_RETRY_MS:250}
+
+aplicacao:
+  cors:
+    origens-permitidas: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
